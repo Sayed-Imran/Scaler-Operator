@@ -29,7 +29,15 @@ type ScalerSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Scaler. Edit scaler_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Start int `json:"start"`
+	End   int `json:"end"`
+	Deployments []NamespacedName `json:"deployments"`
+}
+
+type NamespacedName struct {
+	Name string `json:"name"`
+	Namespace string `json:"namespace"`
+	Replicas int32 `json:"replicas"`
 }
 
 // ScalerStatus defines the observed state of Scaler

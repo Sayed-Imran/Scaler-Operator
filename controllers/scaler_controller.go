@@ -19,10 +19,14 @@ package controllers
 import (
 	"context"
 
+	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"time"
 
 	apiv1alpha1 "githum.com/Sayed-Imran/scaler-operator/api/v1alpha1"
 )
@@ -49,9 +53,44 @@ type ScalerReconciler struct {
 func (r *ScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	scaler := &apiv1alpha1.Scaler{}
+	err := r.Get(ctx, req.NamespacedName, scaler)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	startTime := scaler.Spec.Start
+	endTime := scaler.Spec.End
+	deployments := scaler.Spec.Deployments
+	
+	currentTime := time.Now().UTC().Hour()
 
-	return ctrl.Result{}, nil
+	if currentTime >= startTime && currentTime <= endTime {
+		for _, deployment := range deployments {
+			deploy := &v1.Deployment{}
+			err:= r.Get(ctx, types.NamespacedName{
+				Name: deployment.Name, 
+				Namespace: deployment.Namespace,
+			},
+			deploy,
+		)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			if *deploy.Spec.Replicas != deployment.Replicas {
+				deploy.Spec.Replicas = &deployment.Replicas
+				err:= r.Update(ctx, deploy)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+			
+			}
+		}
+	}
+	
+
+			 
+
+	return ctrl.Result{ RequeueAfter: time.Duration(30 * time.Second) }, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

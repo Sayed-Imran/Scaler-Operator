@@ -9,4 +9,12 @@ metadata:
     app.kubernetes.io/created-by: scaler
   name: scaler-sample
 spec:
-  # TODO(user): Add fields here
+  start: 5
+  end: 10
+  deployments:
+  - name: micro-1
+    namespace: default
+    replicas: 3
+  - name: micro-2
+    namespace: default
+    replicas: 2
